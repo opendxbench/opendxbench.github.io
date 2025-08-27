@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenDxBench 排行榜</title>
+    <!-- 引入 Inter 字体 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* 亮色背景 */
+        }
+        .tab-button.active {
+            background-image: linear-gradient(to right, #4c51bf, #667eea);
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- 主容器 -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-7xl">
+
+        <!-- 标题和描述 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">OpenDxBench 排行榜</h1>
+            <p class="text-lg text-gray-600">
+                LMMs 在 Primary Diagnosis Recall 和 Complete Diagnosis Recall 上的表现。
+            </p>
+        </div>
+
+        <!-- 一级标签容器 -->
+        <div class="flex justify-center items-center mb-6 space-x-4">
+            <button id="tab-top5" class="tab-button py-2 px-6 rounded-full font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200">
+                Top-5
+            </button>
+            <button id="tab-top10" class="tab-button py-2 px-6 rounded-full font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200">
+                Top-10
+            </button>
+        </div>
+
+        <!-- 二级标签和内容容器 -->
+        <div id="content-container">
+            <!-- 二级标签容器 -->
+            <div class="flex justify-center items-center mb-8 space-x-4">
+                <button id="subtab-primary" class="tab-button py-2 px-6 rounded-full font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200">
+                    Primary
+                </button>
+                <button id="subtab-complete" class="tab-button py-2 px-6 rounded-full font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200">
+                    Complete
+                </button>
+            </div>
+
+            <!-- 排行榜表格 -->
+            <div class="overflow-x-auto shadow-lg rounded-2xl">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 border-r border-gray-300">Models</th>
+                            <th scope="col" class="px-6 py-3 border-r border-gray-300 cursor-pointer hover:bg-gray-300 transition-colors duration-200" data-sort="icd">
+                                ICD <span class="sort-icon"></span>
+                            </th>
+                            <th scope="col" class="px-6 py-3 border-r border-gray-300 cursor-pointer hover:bg-gray-300 transition-colors duration-200" data-sort="sem">
+                                Sem. <span class="sort-icon"></span>
+                            </th>
+                            <th scope="col" class="px-6 py-3 cursor-pointer hover:bg-gray-300 transition-colors duration-200" data-sort="avg">
+                                Avg. <span class="sort-icon"></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body" class="bg-white divide-y divide-gray-200">
+                        <!-- 数据将由 JavaScript 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 存储所有表格数据
+        const tableData = {
+            'top5': {
+                'primary': [
+                    { model: 'Qwen2.5-VL-7B', icd: 16.5, sem: 17.9, avg: 18.9 },
+                    { model: 'GPT-4o', icd: 29.8, sem: 45.3, avg: 37.5 },
+                    { model: 'Gemini-2.5-Flash', icd: 33.8, sem: 46.7, avg: 40.2 },
+                    { model: 'Gemini-2.5-Pro', icd: 37.3, sem: 54.7, avg: 46.0 }
+                ],
+                'complete': [
+                    { model: 'Qwen2.5-VL-7B', icd: 11.8, sem: 9.1, avg: 10.5 },
+                    { model: 'GPT-4o', icd: 20.3, sem: 29.8, avg: 25.0 },
+                    { model: 'Gemini-2.5-Flash', icd: 21.6, sem: 30.7, avg: 26.2 },
+                    { model: 'Gemini-2.5-Pro', icd: 24.8, sem: 37.8, avg: 31.3 }
+                ]
+            },
+            'top10': {
+                'primary': [
+                    { model: 'Qwen2.5-VL-7B', icd: 23.2, sem: 18.4, avg: 20.8 },
+                    { model: 'GPT-4o', icd: 48.2, sem: 51.9, avg: 44.8 },
+                    { model: 'Gemini-2.5-Flash', icd: 61.9, sem: 51.0, avg: 56.5 },
+                    { model: 'Gemini-2.5-Pro', icd: 68.0, sem: 56.5, avg: 62.2 }
+                ],
+                'complete': [
+                    { model: 'Qwen2.5-VL-7B', icd: 14.1, sem: 9.3, avg: 11.7 },
+                    { model: 'GPT-4o', icd: 37.8, sem: 31.5, avg: 34.6 },
+                    { model: 'Gemini-2.5-Flash', icd: 42.2, sem: 38.0, avg: 41.2 },
+                    { model: 'Gemini-2.5-Pro', icd: 47.8, sem: 39.4, avg: 43.6 }
+                ]
+            }
+        };
+
+        const top5Tab = document.getElementById('tab-top5');
+        const top10Tab = document.getElementById('tab-top10');
+        const primarySubtab = document.getElementById('subtab-primary');
+        const completeSubtab = document.getElementById('subtab-complete');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const sortHeaders = document.querySelectorAll('[data-sort]');
+
+        let currentMainTab = 'top5';
+        let currentSubTab = 'primary';
+        let currentSortColumn = 'avg';
+        let currentSortDirection = 'desc';
+
+        // 激活标签并更新内容
+        function activateTab(mainTab, subTab) {
+            currentMainTab = mainTab;
+            currentSubTab = subTab;
+
+            // 更新主标签样式
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            document.getElementById(`tab-${mainTab}`).classList.add('active');
+            
+            // 更新副标签样式
+            document.getElementById(`subtab-primary`).classList.remove('active');
+            document.getElementById(`subtab-complete`).classList.remove('active');
+            document.getElementById(`subtab-${subTab}`).classList.add('active');
+
+            renderTable();
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const data = tableData[currentMainTab][currentSubTab];
+            const sortedData = sortData(data, currentSortColumn, currentSortDirection);
+
+            // 查找每一列的最大值
+            const maxValues = {
+                icd: Math.max(...data.map(item => item.icd)),
+                sem: Math.max(...data.map(item => item.sem)),
+                avg: Math.max(...data.map(item => item.avg))
+            };
+            
+            leaderboardBody.innerHTML = ''; // 清空表格内容
+
+            sortedData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = `border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200 ${item.model === 'Gemini-2.5-Pro' || item.model === 'GPT-4o' ? 'bg-gray-50 hover:bg-gray-100' : ''}`;
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">${item.model}</td>
+                    <td class="px-6 py-4 whitespace-nowrap ${item.icd === maxValues.icd ? 'font-bold text-blue-600' : ''}">${item.icd}</td>
+                    <td class="px-6 py-4 whitespace-nowrap ${item.sem === maxValues.sem ? 'font-bold text-blue-600' : ''}">${item.sem}</td>
+                    <td class="px-6 py-4 whitespace-nowrap ${item.avg === maxValues.avg ? 'font-bold text-blue-600' : ''}">${item.avg}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+            updateSortIcons();
+        }
+
+        // 排序数据
+        function sortData(data, key, direction) {
+            return [...data].sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+
+                if (direction === 'asc') {
+                    return valA - valB;
+                } else {
+                    return valB - valA;
+                }
+            });
+        }
+
+        // 更新排序图标
+        function updateSortIcons() {
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.textContent = ''; // 清除所有图标
+            });
+
+            const currentIcon = document.querySelector(`[data-sort="${currentSortColumn}"] .sort-icon`);
+            if (currentIcon) {
+                currentIcon.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+            }
+        }
+
+        // 事件监听
+        top5Tab.addEventListener('click', () => activateTab('top5', currentSubTab));
+        top10Tab.addEventListener('click', () => activateTab('top10', currentSubTab));
+        primarySubtab.addEventListener('click', () => activateTab(currentMainTab, 'primary'));
+        completeSubtab.addEventListener('click', () => activateTab(currentMainTab, 'complete'));
+
+        sortHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const newSortColumn = header.dataset.sort;
+                if (currentSortColumn === newSortColumn) {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortColumn = newSortColumn;
+                    currentSortDirection = 'desc'; // 默认降序
+                }
+                renderTable();
+            });
+        });
+
+        // 页面初始渲染
+        activateTab(currentMainTab, currentSubTab);
+
+    </script>
+</body>
+</html>
